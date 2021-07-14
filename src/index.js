@@ -10,19 +10,77 @@ app.use(cors());
 const users = [];
 
 function checksExistsUserAccount(request, response, next) {
-  // Complete aqui
+  const { username } = request.headers;
+
+  const user = users.find((user) => user.username === username );
+
+    if(!user){
+      return response.status(404).json({ error: "User not found!" });
+    }
+
+    request.user = user;
+    return next();
 }
 
+/*Esse middleware deve receber o **usuário**
+já dentro do request e chamar a função next apenas se
+esse usuário ainda estiver no **plano grátis e ainda 
+não possuir 10 *todos* cadastrados** ou se ele **já 
+estiver com o plano Pro ativado**.
+*/
+
 function checksCreateTodosUserAvailability(request, response, next) {
-  // Complete aqui
+  const { user } = request;
+
+  if (user.pro === true) {
+    return response.send();
+  }
+
+  if (user.todos.length() > 9) {
+    return response.send();
+  }
+
+  return next();
 }
 
 function checksTodoExists(request, response, next) {
-  // Complete aqui
+  const { username } = request.body;
+  const { id } = request.params;
+
+  const user = users.find((user) => user.username === username );
+
+  if(!user){
+    return response.status(404).json({ error: "User not found!" });
+  }
+
+  if(!validate(id)){
+    return response.status(404).json({ error: "Invalid ID!" });
+  }
+
+  const todo = user.todos.find((todo) => todo.id === id);
+
+  if (!todo) {
+    return response.status(404).json({ error: "Todod not found" });
+  }
+
+  request.todo = todo;
+  request.user = user;
+  return next();
+
 }
 
 function findUserById(request, response, next) {
-  // Complete aqui
+  const { id } = request.params;
+
+  const user = users.find((user) => user.id === id);
+
+  if (!user) {
+    return response.status(404).json({ error: "User not found" });
+  }
+
+  request.user = user;
+  return next();
+
 }
 
 app.post('/users', (request, response) => {
