@@ -22,45 +22,34 @@ function checksExistsUserAccount(request, response, next) {
     return next();
 }
 
-/*Esse middleware deve receber o **usuário**
-já dentro do request e chamar a função next apenas se
-esse usuário ainda estiver no **plano grátis e ainda 
-não possuir 10 *todos* cadastrados** ou se ele **já 
-estiver com o plano Pro ativado**.
-*/
-
 function checksCreateTodosUserAvailability(request, response, next) {
   const { user } = request;
 
-  if (user.pro === true) {
-    return response.send();
-  }
-
-  if (user.todos.length() > 9) {
-    return response.send();
+  if (user.todos.length >= 10 && user.pro === false) {
+    return response.status(403).json({error: 'Error max todo limit'});
   }
 
   return next();
 }
 
 function checksTodoExists(request, response, next) {
-  const { username } = request.body;
+  const { username } = request.headers;
   const { id } = request.params;
 
   const user = users.find((user) => user.username === username );
 
   if(!user){
-    return response.status(404).json({ error: "User not found!" });
+    return response.status(404).json({ error: 'User not found!' });
   }
 
   if(!validate(id)){
-    return response.status(404).json({ error: "Invalid ID!" });
+    return response.status(400).json({ error: 'Invalid ID!' });
   }
 
   const todo = user.todos.find((todo) => todo.id === id);
 
   if (!todo) {
-    return response.status(404).json({ error: "Todod not found" });
+    return response.status(404).json({ error: 'Todo not found' });
   }
 
   request.todo = todo;
